@@ -1,0 +1,72 @@
+{
+    "server_port":		          "8080",
+    "log_level":		          "CALL",
+
+    "amqp_url": "amqp://user:pw@rabbitmq:5672/",
+    "amqp_consumer_name": "valuetypesearch",
+    "amqp_reconnect_timeout": 10,
+    "amqp_logging": "true",
+
+    "force_user": "false",
+    "force_auth": "false",
+
+    "elastic_url": "http://elastic:9200",
+    "elastic_retry": 3,
+    "create_index": "true",
+
+    "events": {
+        "valuetype":[
+            {
+                "type": "root",
+                "target": "valuetype",
+                "id_feature":"id",
+                "features": [
+                    {"name": "command", "path": "$.command+", "temp":true},
+                    {"name": "id", "path": "$.id+"},
+                    {"name": "name", "path": "$.value_type.name+"},
+                    {"name": "desc", "path": "$.value_type.description+"},
+                    {"name": "base_type", "path": "$.value_type.base_type+"},
+                    {"name": "fields", "path": "$.value_type.fields+"},
+                    {"name": "literal", "path": "$.value_type.literal+"}
+                ],
+                "if": [{"feature": "id", "operation": "!=", "value": ""}],
+                "actions": [
+                    {
+                        "type": "remove_target",
+                        "if": [{"feature": "command", "operation": "==", "value": "DELETE"}]
+                    },
+                    {
+                        "type": "insert",
+                        "if": [{"feature": "command", "operation": "==", "value": "PUT"}],
+                        "fields": [""],
+                        "scale": "one"
+                    }
+                ],
+                "init":[]
+            }
+        ]
+    },
+
+    "queries": {
+        "valuetype":{
+            "endpoint": {
+                "selection": {"all": true},
+                "projection": ["*"]
+            }
+        }
+    },
+
+    "elastic_mapping": {
+        "valuetype":{
+            "name":{
+                "type": "keyword",
+                "copy_to": "feature_search"
+            },
+            "desc":{
+                "type": "keyword",
+                "copy_to": "feature_search"
+            },
+            "base_type": {"type": "keyword"}
+        }
+    }
+}
